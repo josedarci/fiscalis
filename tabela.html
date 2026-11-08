@@ -42,18 +42,24 @@
       <div class="space-y-4">
         <div>
           <h2 id="table-title" class="text-lg font-bold">2. Pesquise e navegue pela tabela</h2>
-          <p class="mt-1 text-sm text-slate-600">Combine a pesquisa com o ramo estimado do produto. Clique em um título de coluna para ordenar.</p>
+          <p class="mt-1 text-sm text-slate-600">Combine os filtros de tipo e ramo com a pesquisa. No arquivo IBPT, o tipo 2 identifica serviços. Clique em um título de coluna para ordenar.</p>
         </div>
         <div class="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12 lg:gap-4">
-          <label class="block min-w-0 text-sm font-medium sm:col-span-2 lg:col-span-5" for="table-search">
+          <label class="block min-w-0 text-sm font-medium sm:col-span-2 lg:col-span-4" for="table-search">
             <span class="block truncate whitespace-nowrap" title="Pesquisar NCM, descrição ou qualquer campo">Pesquisar NCM, descrição ou qualquer campo</span>
             <input id="table-search" type="search" disabled placeholder="Ex.: NCM, cavalos, alimentos"
               class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 disabled:bg-slate-100">
           </label>
-          <label class="block min-w-0 text-sm font-medium lg:col-span-5" for="business-filter">
+          <label class="block min-w-0 text-sm font-medium lg:col-span-3" for="business-filter">
             <span class="block truncate whitespace-nowrap" title="Ramo do produto (estimado pelo NCM)">Ramo do produto (estimado pelo NCM)</span>
             <select id="business-filter" disabled class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 disabled:bg-slate-100">
               <option value="">Todos os ramos</option>
+            </select>
+          </label>
+          <label class="block min-w-0 text-sm font-medium lg:col-span-3" for="item-type-filter">
+            <span class="block truncate whitespace-nowrap" title="Tipo de item">Tipo de item</span>
+            <select id="item-type-filter" disabled class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 disabled:bg-slate-100">
+              <option value="">Todos os tipos</option>
             </select>
           </label>
           <label class="block min-w-0 text-sm font-medium sm:col-span-2 sm:max-w-48 lg:col-span-2 lg:max-w-none" for="page-size">
@@ -87,7 +93,7 @@
         <p id="empty-state" class="px-4 py-10 text-center text-sm text-slate-500">A tabela aparecerá aqui após carregar o arquivo.</p>
       </div>
     </section>
-    <p class="text-xs leading-5 text-slate-500">O ramo é uma organização aproximada dos capítulos NCM, não uma classificação oficial da empresa ou do setor econômico. Produtos de um mesmo ramo podem atender a negócios diferentes. Confira a versão e o período de vigência do arquivo; esta tela apenas apresenta o conteúdo do CSV selecionado.</p>
+    <p class="text-xs leading-5 text-slate-500">O filtro usa o campo tipo do CSV (tipo 2 para serviços). O ramo é uma organização aproximada dos capítulos NCM, não uma classificação oficial da empresa ou do setor econômico. Produtos de um mesmo ramo podem atender a negócios diferentes. Confira a versão e o período de vigência do arquivo; esta tela apenas apresenta o conteúdo do CSV selecionado.</p>
   </main>
   <script src="/static/tabela.js" defer></script>
 </body>

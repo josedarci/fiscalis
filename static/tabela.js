@@ -5,6 +5,7 @@ const fileStatus = document.getElementById("file-status");
 const fileError = document.getElementById("file-error");
 const searchInput = document.getElementById("table-search");
 const businessFilter = document.getElementById("business-filter");
+const itemTypeFilter = document.getElementById("item-type-filter");
 const pageSizeSelect = document.getElementById("page-size");
 const tableHead = document.getElementById("table-head");
 const tableBody = document.getElementById("table-body");
@@ -160,6 +161,38 @@ function renderBusinessOptions(rows) {
   businessFilter.disabled = rows.length === 0;
 }
 
+function renderItemTypeOptions(rows, hasTypeColumn) {
+  const counts = new Map();
+  for (const row of rows) {
+    const type = row.tipo?.trim() || "";
+    counts.set(type, (counts.get(type) ?? 0) + 1);
+  }
+
+  itemTypeFilter.replaceChildren();
+  const allOption = document.createElement("option");
+  allOption.value = "";
+  allOption.textContent = `Todos os tipos (${rows.length.toLocaleString("pt-BR")})`;
+  itemTypeFilter.append(allOption);
+
+  if (counts.has("2")) {
+    const serviceOption = document.createElement("option");
+    serviceOption.value = "2";
+    serviceOption.textContent = `Serviços (${counts.get("2").toLocaleString("pt-BR")})`;
+    itemTypeFilter.append(serviceOption);
+  }
+
+  const nonServiceCount = rows.length - (counts.get("2") ?? 0);
+  if (nonServiceCount > 0) {
+    const otherOption = document.createElement("option");
+    otherOption.value = "not-2";
+    otherOption.textContent = `Produtos e outros (${nonServiceCount.toLocaleString("pt-BR")})`;
+    itemTypeFilter.append(otherOption);
+  }
+
+  itemTypeFilter.value = "";
+  itemTypeFilter.disabled = !hasTypeColumn || rows.length === 0;
+}
+
 function dateValue(value) {
   const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
   return match ? Date.UTC(Number(match[3]), Number(match[2]) - 1, Number(match[1])) : Number.NaN;
@@ -200,8 +233,10 @@ function updateButtons(pageCount) {
 function renderTable() {
   const query = normalizeText(searchInput.value.trim());
   const selectedSegment = businessFilter.value;
+  const selectedType = itemTypeFilter.value;
   state.filteredRows = state.rows.filter((row) =>
-    (!selectedSegment || row._segment === selectedSegment)
+    (!selectedType || (selectedType === "2" ? row.tipo?.trim() === "2" : row.tipo?.trim() !== "2"))
+      && (!selectedSegment || row._segment === selectedSegment)
       && (
         !query
         || normalizeText(row._segment).includes(query)
@@ -332,6 +367,7 @@ async function loadCsv(file) {
     state.sortColumn = columns.includes("codigo") ? "codigo" : columns[0];
     state.sortDirection = "asc";
     renderBusinessOptions(rows);
+    renderItemTypeOptions(rows, columns.includes("tipo"));
     searchInput.disabled = false;
     pageSizeSelect.disabled = false;
     renderHeaders();
@@ -346,11 +382,17 @@ async function loadCsv(file) {
     tableBody.replaceChildren();
     searchInput.disabled = true;
     businessFilter.disabled = true;
+    itemTypeFilter.disabled = true;
     businessFilter.replaceChildren();
+    itemTypeFilter.replaceChildren();
     const allOption = document.createElement("option");
     allOption.value = "";
     allOption.textContent = "Todos os ramos";
     businessFilter.append(allOption);
+    const allTypesOption = document.createElement("option");
+    allTypesOption.value = "";
+    allTypesOption.textContent = "Todos os tipos";
+    itemTypeFilter.append(allTypesOption);
     pageSizeSelect.disabled = true;
     resultCount.textContent = "Carregue um CSV para começar.";
     pageIndicator.textContent = "Página 0 de 0";
@@ -372,6 +414,10 @@ searchInput.addEventListener("input", () => {
   renderTable();
 });
 businessFilter.addEventListener("change", () => {
+  state.page = 1;
+  renderTable();
+});
+itemTypeFilter.addEventListener("change", () => {
   state.page = 1;
   renderTable();
 });

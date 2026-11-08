@@ -95,9 +95,10 @@ O formulário não guarda o token no navegador nem o envia ao banco de dados. O 
 1. No menu superior, clique em **Tabela IBPT** ou abra `http://localhost:8000/tabela`.
 2. Clique no seletor de arquivo e escolha o CSV `TabelaIBPT...csv` baixado do portal IBPT.
 3. Use a busca para filtrar por NCM, descrição, vigência, alíquota ou ramo estimado.
-4. Selecione um **Ramo do produto** para filtrar por categoria aproximada derivada do capítulo NCM; o número de produtos aparece ao lado de cada opção.
-5. Combine a categoria com a busca de texto. Clique no título de uma coluna para ordenar; clique novamente para inverter a ordem.
-6. Use os controles de paginação para navegar pelos resultados e escolha exibir 25, 50 ou 100 linhas por página.
+4. Selecione **Serviços** em **Tipo de item** para filtrar as linhas marcadas como tipo `2` no CSV IBPT. A opção **Produtos e outros** mostra os demais tipos.
+5. Selecione um **Ramo do produto** para filtrar por categoria aproximada derivada do capítulo NCM; o número de itens aparece ao lado de cada opção.
+6. Combine os filtros com a busca de texto. Clique no título de uma coluna para ordenar; clique novamente para inverter a ordem.
+7. Use os controles de paginação para navegar pelos resultados e escolha exibir 25, 50 ou 100 linhas por página.
 
 O CSV é lido localmente pelo navegador: seu conteúdo não é enviado ao servidor nem incluído no repositório. O ramo é uma organização aproximada dos capítulos NCM, não identifica oficialmente a atividade da empresa, e produtos podem ser usados em vários setores. Baixe a tabela atualizada pelo canal oficial do IBPT e confira a versão e vigência antes de usar os valores.
 
