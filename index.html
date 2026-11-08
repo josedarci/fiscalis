@@ -47,7 +47,7 @@
           <li>Informe o NCM do produto, selecione a UF, descreva o produto e informe seu valor em reais. Unidade, GTIN e exceção podem ser preenchidos quando aplicáveis.</li>
           <li>Clique em <strong>Consultar estimativa</strong> e aguarde a resposta. Os percentuais e os valores aproximados aparecem no quadro de resultado.</li>
           <li>Role até <strong>Histórico recente</strong> para conferir consultas anteriores. Use <strong>Atualizar</strong> se quiser recarregar a lista.</li>
-          <li>Para consultar uma tabela IBPT que você já baixou, abra <strong>Tabela IBPT</strong> no menu, escolha o CSV no seu computador e use a busca, ordenação e paginação.</li>
+          <li>Para consultar uma tabela IBPT que você já baixou, abra <strong>Tabela IBPT</strong> no menu, escolha o CSV no seu computador e use a busca, o filtro aproximado de ramo pelo NCM, a ordenação e a paginação.</li>
         </ol>
       </section>
       <section aria-labelledby="help-fields-title">
@@ -67,7 +67,8 @@
           <div><h4 class="font-semibold text-slate-900">Por que a consulta pode falhar?</h4><p>Confira a conexão com a internet, o token e o CNPJ, a UF e o NCM. A API do IBPT ou o banco também podem estar temporariamente indisponíveis. A mensagem exibida indica se é necessário tentar novamente.</p></div>
           <div><h4 class="font-semibold text-slate-900">O Fiscalis guarda meu token?</h4><p>Não. O token é enviado ao backend para realizar a consulta, mas não é salvo no banco nem exibido no histórico. O CNPJ, os dados do produto, os percentuais e a data são persistidos no MySQL local.</p></div>
           <div><h4 class="font-semibold text-slate-900">Onde ficam as consultas anteriores?</h4><p>Na seção Histórico recente desta página. O banco usa um volume Docker persistente; parar os containers não apaga os dados.</p></div>
-          <div><h4 class="font-semibold text-slate-900">Como consultar a tabela IBPT baixada?</h4><p>Abra <strong>Tabela IBPT</strong> no menu e selecione o CSV no seu computador. A tabela é carregada só no navegador, onde você pode pesquisar, ordenar pelas colunas e paginar os resultados.</p></div>
+          <div><h4 class="font-semibold text-slate-900">Como consultar por ramo de atividade?</h4><p>Na tela <strong>Tabela IBPT</strong>, selecione um ramo estimado pelo capítulo do NCM e, se quiser, combine com a busca de texto. Essa categoria organiza produtos e não determina oficialmente o ramo da sua empresa.</p></div>
+          <div><h4 class="font-semibold text-slate-900">Como consultar a tabela IBPT baixada?</h4><p>Abra <strong>Tabela IBPT</strong> no menu e selecione o CSV no seu computador. A tabela é carregada só no navegador, onde você pode pesquisar, filtrar por ramo estimado, ordenar pelas colunas e paginar os resultados.</p></div>
           <div><h4 class="font-semibold text-slate-900">Como encerro o aplicativo?</h4><p>No terminal em que o Compose está rodando, pressione <kbd class="rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5">Ctrl+C</kbd>. Para remover os containers, execute <code class="rounded bg-slate-100 px-1.5 py-0.5">docker compose down</code>. Evite <code class="rounded bg-slate-100 px-1.5 py-0.5">docker compose down -v</code>, pois esse comando também apaga o histórico armazenado.</p></div>
           <div><h4 class="font-semibold text-slate-900">Onde consigo ajuda para instalar?</h4><p>Consulte o README do projeto no GitHub para ver os requisitos e o passo a passo de instalação.</p></div>
         </div>

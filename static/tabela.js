@@ -4,6 +4,7 @@ const fileInput = document.getElementById("csv-file");
 const fileStatus = document.getElementById("file-status");
 const fileError = document.getElementById("file-error");
 const searchInput = document.getElementById("table-search");
+const businessFilter = document.getElementById("business-filter");
 const pageSizeSelect = document.getElementById("page-size");
 const tableHead = document.getElementById("table-head");
 const tableBody = document.getElementById("table-body");
@@ -39,6 +40,27 @@ const NUMERIC_COLUMNS = new Set([
   "municipal",
 ]);
 const DATE_COLUMNS = new Set(["vigenciainicio", "vigenciafim"]);
+const BUSINESS_SEGMENTS = [
+  { first: 1, last: 5, label: "Agropecuária e produtos de origem animal" },
+  { first: 6, last: 14, label: "Agricultura e produtos vegetais" },
+  { first: 15, last: 24, label: "Alimentos, bebidas e tabaco" },
+  { first: 25, last: 27, label: "Mineração, combustíveis e energia" },
+  { first: 28, last: 38, label: "Químicos, farmacêuticos e cosméticos" },
+  { first: 39, last: 40, label: "Plásticos e borracha" },
+  { first: 41, last: 43, label: "Couro, peles e artigos relacionados" },
+  { first: 44, last: 49, label: "Madeira, papel e impressos" },
+  { first: 50, last: 63, label: "Têxtil, vestuário e confecções" },
+  { first: 64, last: 67, label: "Calçados e acessórios" },
+  { first: 68, last: 70, label: "Construção, cerâmica, pedras e vidro" },
+  { first: 71, last: 71, label: "Joalheria e metais preciosos" },
+  { first: 72, last: 83, label: "Metais, siderurgia e metalurgia" },
+  { first: 84, last: 85, label: "Máquinas, eletrônicos e equipamentos elétricos" },
+  { first: 86, last: 89, label: "Transporte, veículos e navegação" },
+  { first: 90, last: 92, label: "Instrumentos, saúde, óptica e música" },
+  { first: 93, last: 93, label: "Segurança e armamentos" },
+  { first: 94, last: 96, label: "Móveis, brinquedos e produtos diversos" },
+  { first: 97, last: 97, label: "Arte, antiguidades e colecionáveis" },
+];
 const state = {
   columns: [],
   rows: [],
@@ -47,6 +69,7 @@ const state = {
   pageSize: 50,
   sortColumn: "codigo",
   sortDirection: "asc",
+  segments: new Map(),
 };
 
 function parseDelimited(text, delimiter = ";") {
@@ -97,6 +120,46 @@ function normalizeText(value) {
     .toLocaleLowerCase("pt-BR");
 }
 
+function segmentForNcm(code) {
+  const chapterText = /^\d{2}/.exec(String(code ?? "").trim())?.[0];
+  if (!chapterText) return "Não classificado";
+  const chapter = Number(chapterText);
+  const segment = BUSINESS_SEGMENTS.find(
+    (item) => chapter >= item.first && chapter <= item.last,
+  );
+  return segment?.label ?? "Não classificado";
+}
+
+function renderBusinessOptions(rows) {
+  state.segments = new Map();
+  for (const row of rows) {
+    const segment = segmentForNcm(row.codigo);
+    row._segment = segment;
+    state.segments.set(segment, (state.segments.get(segment) ?? 0) + 1);
+  }
+
+  businessFilter.replaceChildren();
+  const allOption = document.createElement("option");
+  allOption.value = "";
+  allOption.textContent = `Todos os ramos (${rows.length.toLocaleString("pt-BR")})`;
+  businessFilter.append(allOption);
+
+  const orderedSegments = BUSINESS_SEGMENTS
+    .map((item) => item.label)
+    .filter((label) => state.segments.has(label));
+  if (state.segments.has("Não classificado")) {
+    orderedSegments.push("Não classificado");
+  }
+  for (const segment of orderedSegments) {
+    const option = document.createElement("option");
+    option.value = segment;
+    option.textContent = `${segment} (${state.segments.get(segment).toLocaleString("pt-BR")})`;
+    businessFilter.append(option);
+  }
+  businessFilter.value = "";
+  businessFilter.disabled = rows.length === 0;
+}
+
 function dateValue(value) {
   const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
   return match ? Date.UTC(Number(match[3]), Number(match[2]) - 1, Number(match[1])) : Number.NaN;
@@ -136,8 +199,14 @@ function updateButtons(pageCount) {
 
 function renderTable() {
   const query = normalizeText(searchInput.value.trim());
+  const selectedSegment = businessFilter.value;
   state.filteredRows = state.rows.filter((row) =>
-    !query || state.columns.some((column) => normalizeText(row[column]).includes(query)),
+    (!selectedSegment || row._segment === selectedSegment)
+      && (
+        !query
+        || normalizeText(row._segment).includes(query)
+        || state.columns.some((column) => normalizeText(row[column]).includes(query))
+      ),
   );
   state.filteredRows.sort((left, right) => {
     const result = compareRows(left, right, state.sortColumn);
@@ -235,6 +304,7 @@ async function loadCsv(file) {
     state.pageSize = Number(pageSizeSelect.value);
     state.sortColumn = columns.includes("codigo") ? "codigo" : columns[0];
     state.sortDirection = "asc";
+    renderBusinessOptions(rows);
     searchInput.disabled = false;
     pageSizeSelect.disabled = false;
     renderHeaders();
@@ -244,9 +314,16 @@ async function loadCsv(file) {
     state.columns = [];
     state.rows = [];
     state.filteredRows = [];
+    state.segments.clear();
     tableHead.replaceChildren();
     tableBody.replaceChildren();
     searchInput.disabled = true;
+    businessFilter.disabled = true;
+    businessFilter.replaceChildren();
+    const allOption = document.createElement("option");
+    allOption.value = "";
+    allOption.textContent = "Todos os ramos";
+    businessFilter.append(allOption);
     pageSizeSelect.disabled = true;
     resultCount.textContent = "Carregue um CSV para começar.";
     pageIndicator.textContent = "Página 0 de 0";
@@ -264,6 +341,10 @@ fileInput.addEventListener("change", () => {
   if (file) loadCsv(file);
 });
 searchInput.addEventListener("input", () => {
+  state.page = 1;
+  renderTable();
+});
+businessFilter.addEventListener("change", () => {
   state.page = 1;
   renderTable();
 });

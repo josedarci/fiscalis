@@ -42,12 +42,17 @@
       <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h2 id="table-title" class="text-lg font-bold">2. Pesquise e navegue pela tabela</h2>
-          <p class="mt-1 text-sm text-slate-600">Clique em um título de coluna para ordenar. A pesquisa considera todos os campos.</p>
+          <p class="mt-1 text-sm text-slate-600">Combine a pesquisa com o ramo estimado do produto. Clique em um título de coluna para ordenar.</p>
         </div>
-        <div class="grid gap-3 sm:grid-cols-[minmax(15rem,1fr)_auto] lg:w-2/3">
+        <div class="grid gap-3 sm:grid-cols-[minmax(15rem,1fr)_auto] lg:w-3/4 lg:grid-cols-[minmax(12rem,1.5fr)_minmax(12rem,1fr)_auto]">
           <label class="block text-sm font-medium" for="table-search">Pesquisar NCM, descrição ou qualquer campo
-            <input id="table-search" type="search" disabled placeholder="Ex.: 01012100 ou cavalos"
+            <input id="table-search" type="search" disabled placeholder="Ex.: NCM, cavalos, alimentos"
               class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 disabled:bg-slate-100">
+          </label>
+          <label class="block text-sm font-medium" for="business-filter">Ramo do produto (estimado pelo NCM)
+            <select id="business-filter" disabled class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 disabled:bg-slate-100">
+              <option value="">Todos os ramos</option>
+            </select>
           </label>
           <label class="block text-sm font-medium" for="page-size">Linhas por página
             <select id="page-size" disabled class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 disabled:bg-slate-100">
@@ -79,7 +84,7 @@
         <p id="empty-state" class="px-4 py-10 text-center text-sm text-slate-500">A tabela aparecerá aqui após carregar o arquivo.</p>
       </div>
     </section>
-    <p class="text-xs leading-5 text-slate-500">Confira a versão e o período de vigência do arquivo. Os dados e alíquotas são disponibilizados pelo IBPT; esta tela apenas apresenta o conteúdo do CSV selecionado.</p>
+    <p class="text-xs leading-5 text-slate-500">O ramo é uma organização aproximada dos capítulos NCM, não uma classificação oficial da empresa ou do setor econômico. Produtos de um mesmo ramo podem atender a negócios diferentes. Confira a versão e o período de vigência do arquivo; esta tela apenas apresenta o conteúdo do CSV selecionado.</p>
   </main>
   <script src="/static/tabela.js" defer></script>
 </body>
