@@ -22,6 +22,9 @@ const servicePriceInput = document.getElementById("service-sale-price");
 const serviceQuoteError = document.getElementById("service-quote-error");
 const serviceQuoteResult = document.getElementById("service-quote-result");
 const serviceBreakdown = document.getElementById("service-tax-breakdown");
+const federalScenarioField = document.getElementById("federal-scenario-field");
+const federalScenarioSelect = document.getElementById("federal-scenario");
+const salePriceLabel = document.getElementById("sale-price-label");
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL",
@@ -287,8 +290,15 @@ function renderServiceQuote() {
     return;
   }
 
+  const isService = selectedService.tipo?.trim() === "2";
+  const federalKey = isService || federalScenarioSelect.value === "nacional"
+    ? "nacionalfederal"
+    : "importadosfederal";
+  const federalLabel = isService || federalScenarioSelect.value === "nacional"
+    ? "Federal (nacional)"
+    : "Federal (importado)";
   const taxes = [
-    { key: "nacionalfederal", label: "Federal (nacional)" },
+    { key: federalKey, label: federalLabel },
     { key: "estadual", label: "Estadual" },
     { key: "municipal", label: "Municipal" },
   ];
@@ -321,16 +331,27 @@ function renderServiceQuote() {
     : currencyFormatter.format(price);
   document.getElementById("service-estimate-note").textContent = availableTaxes < taxes.length
     ? "Estimativa parcial: um ou mais percentuais não estavam disponíveis no arquivo. O total simulado soma apenas os valores calculados."
-    : "O cálculo aplica cada percentual ao valor de venda informado e soma os valores estimados, arredondados para centavos. A alíquota de importados não é usada para este serviço.";
+    : isService
+      ? "O cálculo aplica cada percentual ao valor de venda informado e soma os valores estimados, arredondados para centavos. Esta é uma simulação informativa, não uma definição de quanto deve ser cobrado."
+      : `O cenário federal ${federalScenarioSelect.value} foi escolhido para esta simulação. Os percentuais federal nacional e importado são cenários alternativos e não foram somados.`;
   serviceQuoteResult.classList.remove("hidden");
 }
 
 function openServiceQuote(row, checkbox) {
   selectedService = row;
   serviceCheckbox = checkbox;
-  document.getElementById("service-dialog-description").textContent = row.descricao ?? "Serviço";
+  const isService = row.tipo?.trim() === "2";
+  document.getElementById("quote-dialog-eyebrow").textContent = isService
+    ? "Simulação de serviço"
+    : "Simulação de produto";
+  salePriceLabel.textContent = isService
+    ? "Valor de venda do serviço (R$)"
+    : "Valor de venda do produto (R$)";
+  document.getElementById("service-dialog-description").textContent = row.descricao ?? "Item";
   document.getElementById("service-dialog-code").textContent =
-    `Código ${row.codigo ?? "—"} · Exceção ${row.ex || "0"} · Tipo serviço`;
+    `Código ${row.codigo ?? "—"} · Exceção ${row.ex || "0"} · Tipo ${row.tipo ?? "—"}`;
+  federalScenarioField.classList.toggle("hidden", isService);
+  federalScenarioSelect.value = "nacional";
   servicePriceInput.value = "";
   serviceQuoteError.classList.add("hidden");
   serviceQuoteResult.classList.add("hidden");
@@ -341,6 +362,9 @@ function openServiceQuote(row, checkbox) {
 serviceQuoteForm.addEventListener("submit", (event) => {
   event.preventDefault();
   renderServiceQuote();
+});
+federalScenarioSelect.addEventListener("change", () => {
+  if (!serviceQuoteResult.classList.contains("hidden")) renderServiceQuote();
 });
 document.getElementById("service-dialog-close").addEventListener("click", () => {
   serviceDialog.close();
@@ -377,20 +401,21 @@ function renderTable() {
   const start = (state.page - 1) * state.pageSize;
   const pageRows = state.filteredRows.slice(start, start + state.pageSize);
   tableBody.replaceChildren();
-  const hasServiceType = state.columns.includes("tipo")
-    && state.rows.some((row) => row.tipo?.trim() === "2");
+  const hasSelectableType = state.columns.includes("tipo")
+    && state.rows.some((row) => Boolean(row.tipo?.trim()));
 
   for (const row of pageRows) {
     const tableRow = document.createElement("tr");
     tableRow.className = "odd:bg-white even:bg-slate-50 hover:bg-teal-50";
-    if (hasServiceType) {
+    if (hasSelectableType) {
       const selectCell = document.createElement("td");
       selectCell.className = "border-b border-slate-100 px-3 py-2 text-center";
-      if (row.tipo?.trim() === "2") {
+      if (row.tipo?.trim()) {
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
         checkbox.className = "h-4 w-4 cursor-pointer rounded border-slate-300 text-teal-700 focus:ring-teal-600";
-        checkbox.setAttribute("aria-label", `Simular valor para o serviço ${row.codigo}: ${row.descricao}`);
+        const itemLabel = row.tipo.trim() === "2" ? "serviço" : "produto";
+        checkbox.setAttribute("aria-label", `Simular valor para o ${itemLabel} ${row.codigo}: ${row.descricao}`);
         checkbox.addEventListener("change", () => {
           if (checkbox.checked) openServiceQuote(row, checkbox);
         });
@@ -425,13 +450,13 @@ function renderTable() {
 
 function renderHeaders() {
   const row = document.createElement("tr");
-  const hasServiceType = state.columns.includes("tipo")
-    && state.rows.some((item) => item.tipo?.trim() === "2");
-  if (hasServiceType) {
+  const hasSelectableType = state.columns.includes("tipo")
+    && state.rows.some((item) => Boolean(item.tipo?.trim()));
+  if (hasSelectableType) {
     const selectHeading = document.createElement("th");
     selectHeading.scope = "col";
     selectHeading.className = "whitespace-nowrap border-b border-slate-300 px-3 py-3 text-center font-semibold";
-    selectHeading.textContent = "Simular serviço";
+    selectHeading.textContent = "Simular item";
     row.append(selectHeading);
   }
   for (const column of state.columns) {

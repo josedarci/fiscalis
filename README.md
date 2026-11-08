@@ -99,11 +99,13 @@ O formulário não guarda o token no navegador nem o envia ao banco de dados. O 
 5. Selecione um **Ramo do produto** para filtrar por categoria aproximada derivada do capítulo NCM; o número de itens aparece ao lado de cada opção.
 6. Combine os filtros com a busca de texto. Clique no título de uma coluna para ordenar; clique novamente para inverter a ordem.
 7. Use os controles de paginação para navegar pelos resultados e escolha exibir 25, 50 ou 100 linhas por página.
-8. Em uma linha de serviço, marque a caixa **Simular serviço**. Na modal, informe o preço de venda e clique em **Calcular estimativa** para ver os percentuais federal nacional, estadual e municipal, os valores calculados e o total simulado.
+8. Em uma linha de produto ou serviço, marque a caixa **Simular item**. Na modal, informe o preço de venda e clique em **Calcular estimativa** para ver os percentuais, valores estimados e total simulado.
 
 O CSV é lido localmente pelo navegador: seu conteúdo não é enviado ao servidor nem incluído no repositório. O ramo é uma organização aproximada dos capítulos NCM, não identifica oficialmente a atividade da empresa, e produtos podem ser usados em vários setores. Baixe a tabela atualizada pelo canal oficial do IBPT e confira a versão e vigência antes de usar os valores.
 
-> A simulação soma ao preço informado os valores estimados calculados a partir dos percentuais do CSV. É apenas uma projeção informativa: a carga tributária do IBPT não determina automaticamente um adicional que deva ser cobrado do cliente. Confirme a formação do preço e os tributos efetivamente aplicáveis com a contabilidade. A coluna de imposto federal importado não é aplicada ao serviço.
+Para produtos, escolha na modal o cenário federal **Nacional** ou **Importado**. Esses percentuais representam cenários alternativos, portanto somente o escolhido entra no cálculo; os valores estadual e municipal disponíveis também são discriminados. Para serviços, o cálculo usa os campos federal nacional, estadual e municipal.
+
+> A simulação soma ao preço informado os valores estimados calculados a partir dos percentuais do CSV. É apenas uma projeção informativa: a carga tributária do IBPT não determina automaticamente um adicional que deva ser cobrado do cliente. Confirme a formação do preço e os tributos efetivamente aplicáveis com a contabilidade.
 
 ## API HTTP
 

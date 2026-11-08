@@ -86,14 +86,14 @@
 
       <div class="mt-4 max-h-[65vh] overflow-auto rounded-lg border border-slate-200">
         <table class="min-w-full border-separate border-spacing-0 text-left text-sm">
-          <caption class="sr-only">Tabela de produtos e alíquotas IBPT; use os botões nos cabeçalhos para ordenar e selecione um serviço para simular o preço.</caption>
+          <caption class="sr-only">Tabela de produtos e alíquotas IBPT; use os botões nos cabeçalhos para ordenar e selecione um item para simular o preço.</caption>
           <thead id="table-head" class="sticky top-0 z-10 bg-slate-100 text-xs uppercase tracking-wide text-slate-700"></thead>
           <tbody id="table-body" class="divide-y divide-slate-100"></tbody>
         </table>
         <p id="empty-state" class="px-4 py-10 text-center text-sm text-slate-500">A tabela aparecerá aqui após carregar o arquivo.</p>
       </div>
     </section>
-    <p class="text-xs leading-5 text-slate-500">O filtro usa o campo tipo do CSV (tipo 2 para serviços). Selecione um serviço para simular os valores estimados de tributos sobre o preço informado. Essa simulação é apenas informativa. O ramo é uma organização aproximada dos capítulos NCM, não uma classificação oficial da empresa ou do setor econômico. Confira a versão e o período de vigência do arquivo.</p>
+    <p class="text-xs leading-5 text-slate-500">O filtro usa o campo tipo do CSV (tipo 2 para serviços). Selecione um item para simular os valores estimados de tributos sobre o preço informado. Para produtos, escolha o cenário federal nacional ou importado; esses cenários são alternativos. Essa simulação é apenas informativa. O ramo é uma organização aproximada dos capítulos NCM, não uma classificação oficial da empresa ou do setor econômico. Confira a versão e o período de vigência do arquivo.</p>
   </main>
 
   <dialog id="service-dialog" aria-labelledby="service-dialog-title"
@@ -101,7 +101,7 @@
     <form id="service-quote-form">
       <div class="flex items-start justify-between gap-4 border-b border-slate-200 p-5 sm:p-6">
         <div class="min-w-0">
-          <p class="text-sm font-semibold uppercase tracking-wider text-teal-700">Simulação de serviço</p>
+          <p id="quote-dialog-eyebrow" class="text-sm font-semibold uppercase tracking-wider text-teal-700">Simulação de item</p>
           <h2 id="service-dialog-title" class="mt-1 text-xl font-bold">Estimar valor total</h2>
           <p id="service-dialog-description" class="mt-2 break-words text-sm text-slate-600"></p>
           <p id="service-dialog-code" class="mt-1 text-xs text-slate-500"></p>
@@ -110,7 +110,15 @@
           class="rounded-lg p-2 text-2xl leading-none text-slate-500 hover:bg-slate-100 hover:text-slate-900">&times;</button>
       </div>
       <div class="space-y-5 p-5 sm:p-6">
-        <label for="service-sale-price" class="block text-sm font-semibold">Valor de venda do serviço (R$)
+        <label id="federal-scenario-field" for="federal-scenario" class="hidden text-sm font-semibold">
+          Cenário federal do produto
+          <select id="federal-scenario" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-3 focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-100">
+            <option value="nacional">Nacional</option>
+            <option value="importado">Importado</option>
+          </select>
+        </label>
+        <label for="service-sale-price" class="block text-sm font-semibold">
+          <span id="sale-price-label">Valor de venda do item (R$)</span>
           <input id="service-sale-price" name="salePrice" type="number" min="0.01" step="0.01" required
             inputmode="decimal" placeholder="Ex.: 1.500,00"
             class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-3 text-lg font-semibold focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-100">
