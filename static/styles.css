@@ -1,0 +1,75 @@
+.field-label {
+  display: block;
+  margin-bottom: 0.45rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.field-label span[aria-hidden="true"] {
+  color: #be123c;
+}
+
+.field-input {
+  display: block;
+  width: 100%;
+  min-height: 2.875rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.625rem;
+  background-color: #fff;
+  padding: 0.625rem 0.75rem;
+  color: #0f172a;
+  font-size: 0.9375rem;
+}
+
+.field-input::placeholder {
+  color: #94a3b8;
+}
+
+.field-input:focus {
+  border-color: #0f766e;
+  outline: 3px solid rgb(15 118 110 / 16%);
+}
+
+.field-input[aria-invalid="true"] {
+  border-color: #e11d48;
+}
+
+.field-help,
+.field-error {
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+}
+
+.field-help {
+  color: #64748b;
+}
+
+.field-error {
+  color: #be123c;
+}
+
+.spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgb(255 255 255 / 45%);
+  border-top-color: #fff;
+  border-radius: 9999px;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

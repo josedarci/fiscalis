@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0f766e">
+    <title>Fiscalis | Estimativa tributária</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="/static/app.js" defer></script>
+  </head>
+  <body class="min-h-screen bg-slate-50 text-slate-800 antialiased">
+    <header class="border-b border-teal-900/10 bg-white">
+      <div class="mx-auto flex max-w-6xl items-center gap-3 px-4 py-5 sm:px-6">
+        <div class="grid h-11 w-11 place-items-center rounded-xl bg-teal-700 text-lg font-bold text-white" aria-hidden="true">F</div>
+        <div>
+          <p class="text-xl font-bold tracking-tight text-slate-900">Fiscalis</p>
+          <p class="text-sm text-slate-500">Estimativa de carga tributária</p>
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-6xl space-y-8 px-4 py-8 sm:px-6 sm:py-10">
+      <section class="max-w-3xl">
+        <p class="text-sm font-semibold uppercase tracking-wider text-teal-700">Consulta IBPT</p>
+        <h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Consulte uma estimativa de impostos</h1>
+        <p class="mt-3 leading-7 text-slate-600">Informe os dados do produto para consultar os percentuais estimados por esfera. A estimativa não substitui o cálculo fiscal da sua operação.</p>
+      </section>
+
+      <section class="grid items-start gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(20rem,0.9fr)]">
+        <form id="consulta-form" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7" novalidate>
+          <div class="mb-6">
+            <h2 class="text-xl font-semibold text-slate-900">Dados do produto</h2>
+            <p class="mt-1 text-sm text-slate-500">Os campos com * são obrigatórios.</p>
+          </div>
+          <div class="grid gap-5 sm:grid-cols-2">
+            <div>
+              <label for="codigo" class="field-label">NCM / código <span aria-hidden="true">*</span></label>
+              <input id="codigo" name="codigo" type="text" inputmode="numeric" autocomplete="off" maxlength="8" pattern="[0-9]{8}" placeholder="Ex.: 01012100" required aria-describedby="codigo-help codigo-error" class="field-input">
+              <p id="codigo-help" class="field-help">Informe os 8 dígitos, sem pontuação.</p>
+              <p id="codigo-error" class="field-error" hidden></p>
+            </div>
+            <div>
+              <label for="uf" class="field-label">Estado (UF) <span aria-hidden="true">*</span></label>
+              <select id="uf" name="uf" required aria-describedby="uf-error" class="field-input">
+                <option value="">Selecione</option>
+                <option>AC</option><option>AL</option><option>AP</option><option>AM</option>
+                <option>BA</option><option>CE</option><option>DF</option><option>ES</option>
+                <option>GO</option><option>MA</option><option>MT</option><option>MS</option>
+                <option>MG</option><option>PA</option><option>PB</option><option>PR</option>
+                <option>PE</option><option>PI</option><option>RJ</option><option>RN</option>
+                <option>RS</option><option>RO</option><option>RR</option><option>SC</option>
+                <option>SP</option><option>SE</option><option>TO</option>
+              </select>
+              <p id="uf-error" class="field-error" hidden></p>
+            </div>
+            <div class="sm:col-span-2">
+              <label for="descricao" class="field-label">Descrição do produto <span aria-hidden="true">*</span></label>
+              <input id="descricao" name="descricao" type="text" maxlength="255" autocomplete="off" required aria-describedby="descricao-error" placeholder="Ex.: Produto para consulta" class="field-input">
+              <p id="descricao-error" class="field-error" hidden></p>
+            </div>
+            <div>
+              <label for="valor" class="field-label">Valor de entrada (R$) <span aria-hidden="true">*</span></label>
+              <input id="valor" name="valor" type="number" inputmode="decimal" min="0.01" step="any" required aria-describedby="valor-help valor-error" placeholder="0,00" class="field-input">
+              <p id="valor-help" class="field-help">Usado como base para estimar os valores de impostos.</p>
+              <p id="valor-error" class="field-error" hidden></p>
+            </div>
+            <div>
+              <label for="unidadeMedida" class="field-label">Unidade de medida <span class="font-normal text-slate-400">(opcional)</span></label>
+              <input id="unidadeMedida" name="unidadeMedida" type="text" maxlength="20" value="UN" autocomplete="off" aria-describedby="unidadeMedida-error" class="field-input">
+              <p id="unidadeMedida-error" class="field-error" hidden></p>
+            </div>
+            <div>
+              <label for="gtin" class="field-label">GTIN <span class="font-normal text-slate-400">(opcional)</span></label>
+              <input id="gtin" name="gtin" type="text" maxlength="20" inputmode="numeric" autocomplete="off" aria-describedby="gtin-error" class="field-input">
+              <p id="gtin-error" class="field-error" hidden></p>
+            </div>
+            <div>
+              <label for="ex" class="field-label">Exceção (EX) <span class="font-normal text-slate-400">(opcional)</span></label>
+              <input id="ex" name="ex" type="number" min="0" step="1" value="0" inputmode="numeric" aria-describedby="ex-error" class="field-input">
+              <p id="ex-error" class="field-error" hidden></p>
+            </div>
+          </div>
+
+          <p id="form-error" class="mt-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert" hidden></p>
+          <button id="submit-button" type="submit" class="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-teal-700 px-5 py-3 font-semibold text-white transition hover:bg-teal-800 focus:outline-none focus:ring-4 focus:ring-teal-700/25 disabled:cursor-wait disabled:opacity-70 sm:w-auto">
+            <span id="submit-label">Consultar estimativa</span>
+            <span id="submit-spinner" class="spinner" aria-hidden="true" hidden></span>
+          </button>
+        </form>
+
+        <section id="result-section" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7" aria-labelledby="result-heading" aria-live="polite">
+          <div class="mb-5">
+            <p class="text-sm font-semibold uppercase tracking-wider text-teal-700">Resultado</p>
+            <h2 id="result-heading" class="mt-1 text-xl font-semibold text-slate-900">Estimativa tributária</h2>
+          </div>
+          <p id="result-placeholder" class="rounded-xl bg-slate-50 p-5 text-sm leading-6 text-slate-600">Preencha os dados e consulte para ver os percentuais e os valores aproximados.</p>
+          <div id="result-content" hidden>
+            <p id="result-product" class="mb-4 break-words text-sm text-slate-600"></p>
+            <dl id="tax-breakdown" class="space-y-3"></dl>
+            <div class="mt-5 rounded-xl bg-teal-50 p-4">
+              <p class="text-sm font-medium text-teal-900">Total aproximado de impostos</p>
+              <p id="estimated-total" class="mt-1 text-2xl font-bold text-teal-900"></p>
+              <p class="mt-1 text-xs leading-5 text-teal-800">Estimativa calculada sobre o valor de entrada informado, somando os percentuais retornados.</p>
+            </div>
+            <p id="result-source" class="mt-4 text-xs text-slate-500"></p>
+          </div>
+        </section>
+      </section>
+
+      <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7" aria-labelledby="history-heading">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p class="text-sm font-semibold uppercase tracking-wider text-teal-700">Consultas recentes</p>
+            <h2 id="history-heading" class="mt-1 text-xl font-semibold text-slate-900">Histórico</h2>
+            <p class="mt-1 text-sm text-slate-500">Consultas registradas, com valor e percentuais retornados.</p>
+          </div>
+          <button id="refresh-history" type="button" class="min-h-10 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-teal-700/15 disabled:opacity-60">Atualizar histórico</button>
+        </div>
+        <p id="history-status" class="mt-5 text-sm text-slate-600" role="status" aria-live="polite"></p>
+        <div id="history-list" class="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3"></div>
+      </section>
+
+      <p class="pb-2 text-center text-xs leading-5 text-slate-500">Os percentuais e valores são estimativas informativas. Confirme a tributação aplicável com um profissional fiscal.</p>
+    </main>
+  </body>
+</html>

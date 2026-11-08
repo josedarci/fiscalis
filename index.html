@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Fiscalis | Estimativa de impostos</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-800">
+  <header class="bg-slate-900 text-white">
+    <div class="mx-auto flex max-w-6xl items-start justify-between gap-4 px-4 py-8 sm:px-6">
+      <div>
+        <img src="/static/fiscalis-logo.png" alt="Fiscalis — Inteligência Tributária" class="mb-5 h-auto w-full max-w-sm rounded-xl">
+        <p class="text-sm font-semibold uppercase tracking-widest text-teal-300">De Olho no Imposto</p>
+        <h1 class="mt-2 text-3xl font-bold sm:text-4xl">Calculadora de carga tributária</h1>
+        <p class="mt-2 max-w-2xl text-slate-300">Consulte uma estimativa de tributos para produtos com dados da API do IBPT.</p>
+      </div>
+      <button id="help-open" type="button" aria-haspopup="dialog" aria-controls="help-dialog"
+        class="shrink-0 rounded-lg border border-slate-500 px-4 py-2 font-semibold text-white hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-300">
+        Ajuda
+      </button>
+    </div>
+  </header>
+
+  <dialog id="help-dialog" aria-labelledby="help-title"
+    class="m-auto max-h-[90vh] w-[min(94vw,48rem)] rounded-2xl p-0 text-slate-800 shadow-2xl backdrop:bg-slate-950/60">
+    <div class="flex items-start justify-between gap-4 border-b border-slate-200 p-5 sm:p-7">
+      <div>
+        <p class="text-sm font-semibold uppercase tracking-wider text-teal-700">Central de ajuda</p>
+        <h2 id="help-title" class="mt-1 text-2xl font-bold">Como usar o Fiscalis</h2>
+        <p class="mt-2 text-sm text-slate-600">Guia rápido e respostas para as dúvidas mais comuns.</p>
+      </div>
+      <button id="help-close" type="button" aria-label="Fechar ajuda"
+        class="rounded-lg p-2 text-2xl leading-none text-slate-500 hover:bg-slate-100 hover:text-slate-900">&times;</button>
+    </div>
+    <div class="max-h-[65vh] space-y-6 overflow-y-auto p-5 sm:p-7">
+      <section aria-labelledby="help-start-title">
+        <h3 id="help-start-title" class="text-lg font-bold">Primeiros passos</h3>
+        <ol class="mt-3 list-decimal space-y-2 pl-5 text-sm leading-6 text-slate-700">
+          <li>Peça à sua empresa um token válido para consultar a API do IBPT. Sem ele, o serviço não consegue buscar os percentuais.</li>
+          <li>Digite o token e o CNPJ habilitado para a consulta. O token aparece mascarado e não é guardado pelo Fiscalis; o CNPJ é incluído no histórico.</li>
+          <li>Informe o NCM do produto, selecione a UF, descreva o produto e informe seu valor em reais. Unidade, GTIN e exceção podem ser preenchidos quando aplicáveis.</li>
+          <li>Clique em <strong>Consultar estimativa</strong> e aguarde a resposta. Os percentuais e os valores aproximados aparecem no quadro de resultado.</li>
+          <li>Role até <strong>Histórico recente</strong> para conferir consultas anteriores. Use <strong>Atualizar</strong> se quiser recarregar a lista.</li>
+        </ol>
+      </section>
+      <section aria-labelledby="help-fields-title">
+        <h3 id="help-fields-title" class="text-lg font-bold">O que significa cada campo?</h3>
+        <dl class="mt-3 space-y-3 text-sm leading-6 text-slate-700">
+          <div><dt class="inline font-semibold">NCM / código:</dt> <dd class="inline">classificação fiscal do produto. Confirme o código correto com sua contabilidade.</dd></div>
+          <div><dt class="inline font-semibold">UF:</dt> <dd class="inline">estado considerado na consulta.</dd></div>
+          <div><dt class="inline font-semibold">Descrição e valor:</dt> <dd class="inline">identificação do produto e preço usado para estimar os valores de tributos.</dd></div>
+          <div><dt class="inline font-semibold">GTIN:</dt> <dd class="inline">código de barras, se disponível.</dd></div>
+          <div><dt class="inline font-semibold">Unidade e exceção:</dt> <dd class="inline">parâmetros adicionais exigidos pela classificação consultada; use os dados fiscais do produto quando conhecidos.</dd></div>
+        </dl>
+      </section>
+      <section aria-labelledby="help-faq-title">
+        <h3 id="help-faq-title" class="text-lg font-bold">Perguntas frequentes</h3>
+        <div class="mt-3 space-y-4 text-sm leading-6 text-slate-700">
+          <div><h4 class="font-semibold text-slate-900">O resultado é o valor definitivo do imposto?</h4><p>Não. É uma estimativa informativa calculada com os percentuais retornados pelo IBPT. A tributação real pode depender de outros dados e regras. Confirme com um profissional contábil.</p></div>
+          <div><h4 class="font-semibold text-slate-900">Por que a consulta pode falhar?</h4><p>Confira a conexão com a internet, o token e o CNPJ, a UF e o NCM. A API do IBPT ou o banco também podem estar temporariamente indisponíveis. A mensagem exibida indica se é necessário tentar novamente.</p></div>
+          <div><h4 class="font-semibold text-slate-900">O Fiscalis guarda meu token?</h4><p>Não. O token é enviado ao backend para realizar a consulta, mas não é salvo no banco nem exibido no histórico. O CNPJ, os dados do produto, os percentuais e a data são persistidos no MySQL local.</p></div>
+          <div><h4 class="font-semibold text-slate-900">Onde ficam as consultas anteriores?</h4><p>Na seção Histórico recente desta página. O banco usa um volume Docker persistente; parar os containers não apaga os dados.</p></div>
+          <div><h4 class="font-semibold text-slate-900">Como encerro o aplicativo?</h4><p>No terminal em que o Compose está rodando, pressione <kbd class="rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5">Ctrl+C</kbd>. Para remover os containers, execute <code class="rounded bg-slate-100 px-1.5 py-0.5">docker compose down</code>. Evite <code class="rounded bg-slate-100 px-1.5 py-0.5">docker compose down -v</code>, pois esse comando também apaga o histórico armazenado.</p></div>
+          <div><h4 class="font-semibold text-slate-900">Onde consigo ajuda para instalar?</h4><p>Consulte o README do projeto no GitHub para ver os requisitos e o passo a passo de instalação.</p></div>
+        </div>
+      </section>
+      <p class="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">Proteja suas credenciais e não exponha este MVP publicamente sem revisar sua configuração de segurança.</p>
+    </div>
+  </dialog>
+
+  <main class="mx-auto grid max-w-6xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+    <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:p-7" aria-labelledby="form-title">
+      <h2 id="form-title" class="text-xl font-bold">Dados da consulta</h2>
+      <p class="mt-1 text-sm text-slate-500">O token não é armazenado. O CNPJ fica registrado no histórico da consulta.</p>
+      <form id="tax-form" class="mt-6 space-y-4">
+        <div class="grid gap-4 sm:grid-cols-2">
+          <label class="block text-sm font-medium">Token IBPT
+            <input name="token" type="password" required autocomplete="off" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5" />
+          </label>
+          <label class="block text-sm font-medium">CNPJ
+            <input name="cnpj" inputmode="numeric" required autocomplete="off" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5" />
+          </label>
+        </div>
+        <div class="grid gap-4 sm:grid-cols-[1fr_7rem]">
+          <label class="block text-sm font-medium">NCM / código
+            <input name="codigo" required maxlength="20" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5" />
+          </label>
+          <label class="block text-sm font-medium">UF
+            <select name="uf" required class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5">
+              <option value="">UF</option>
+              <option>AC</option><option>AL</option><option>AP</option><option>AM</option><option>BA</option><option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option><option>MT</option><option>MS</option><option>MG</option><option>PA</option><option>PB</option><option>PR</option><option>PE</option><option>PI</option><option>RJ</option><option>RN</option><option>RS</option><option>RO</option><option>RR</option><option>SC</option><option>SP</option><option>SE</option><option>TO</option>
+            </select>
+          </label>
+        </div>
+        <label class="block text-sm font-medium">Descrição do produto
+          <input name="descricao" required maxlength="255" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5" />
+        </label>
+        <div class="grid gap-4 sm:grid-cols-3">
+          <label class="block text-sm font-medium">Valor (R$)
+            <input name="valor" type="number" min="0.01" step="0.01" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5" />
+          </label>
+          <label class="block text-sm font-medium">Unidade
+            <input name="unidadeMedida" value="UN" maxlength="20" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5" />
+          </label>
+          <label class="block text-sm font-medium">GTIN
+            <input name="gtin" maxlength="20" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5" />
+          </label>
+        </div>
+        <label class="block max-w-xs text-sm font-medium">Exceção (opcional)
+          <input name="ex" type="number" min="0" step="1" value="0" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5" />
+        </label>
+        <p id="form-error" role="alert" class="hidden rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700"></p>
+        <button id="submit-button" class="w-full rounded-lg bg-teal-700 px-4 py-3 font-semibold text-white hover:bg-teal-800 disabled:cursor-wait disabled:opacity-60">
+          Consultar estimativa
+        </button>
+      </form>
+    </section>
+
+    <section class="space-y-6">
+      <article class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:p-7" aria-labelledby="result-title">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <h2 id="result-title" class="text-xl font-bold">Resultado estimado</h2>
+            <p id="result-product" class="mt-1 break-words text-sm text-slate-500"></p>
+          </div>
+          <span class="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">Estimativa</span>
+        </div>
+        <p id="result-status" class="mt-6 text-sm text-slate-500" aria-live="polite">Preencha os dados e consulte para ver os percentuais.</p>
+        <div id="result-data" class="mt-4 hidden">
+          <dl id="tax-list" class="space-y-2"></dl>
+          <p class="mt-4 rounded-xl bg-teal-50 p-4 text-sm text-teal-950">
+            Soma estimada dos tributos sobre o valor informado:
+            <strong id="tax-total" class="block text-2xl"></strong>
+          </p>
+          <p id="source" class="mt-3 text-xs text-slate-500"></p>
+        </div>
+      </article>
+      <article class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:p-7" aria-labelledby="history-title">
+        <div class="flex items-center justify-between gap-3">
+          <h2 id="history-title" class="text-xl font-bold">Histórico recente</h2>
+          <button id="refresh-history" type="button" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-50">Atualizar</button>
+        </div>
+        <p id="history-status" class="mt-3 text-sm text-slate-500" aria-live="polite">Carregando...</p>
+        <ol id="history-list" class="mt-3 max-h-96 space-y-3 overflow-y-auto"></ol>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    "use strict";
+    const form = document.getElementById("tax-form");
+    const errorBox = document.getElementById("form-error");
+    const resultStatus = document.getElementById("result-status");
+    const resultData = document.getElementById("result-data");
+    const taxList = document.getElementById("tax-list");
+    const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+    const percent = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 4 });
+    const fields = [
+      ["Nacional", "Federal / Nacional"],
+      ["Estadual", "Estadual"],
+      ["Municipal", "Municipal"],
+      ["Importado", "Importado"]
+    ];
+    const helpDialog = document.getElementById("help-dialog");
+
+    document.getElementById("help-open").addEventListener("click", () => helpDialog.showModal());
+    document.getElementById("help-close").addEventListener("click", () => helpDialog.close());
+    helpDialog.addEventListener("click", (event) => {
+      if (event.target === helpDialog) helpDialog.close();
+    });
+
+    function appendText(parent, tag, className, value) {
+      const element = document.createElement(tag);
+      element.className = className;
+      element.textContent = value;
+      parent.append(element);
+      return element;
+    }
+
+    function renderResult(result, price, product) {
+      taxList.replaceChildren();
+      document.getElementById("result-product").textContent = product;
+      let total = 0;
+      let count = 0;
+      for (const [key, label] of fields) {
+        const row = document.createElement("div");
+        row.className = "flex justify-between gap-4 rounded-lg border border-slate-100 px-3 py-3";
+        const rate = result[key] === null || result[key] === undefined || result[key] === ""
+          ? null : Number(result[key]);
+        const amount = rate !== null && Number.isFinite(rate) ? price * rate / 100 : null;
+        if (amount !== null) { total += amount; count += 1; }
+        appendText(row, "dt", "text-sm font-medium", label);
+        appendText(row, "dd", "text-right text-sm font-semibold", rate === null || !Number.isFinite(rate)
+          ? "Não informado" : `${percent.format(rate)}% · ${money.format(amount)}`);
+        taxList.append(row);
+      }
+      document.getElementById("tax-total").textContent = count
+        ? `${money.format(total)}${count < fields.length ? " (parcial)" : ""}` : "Não disponível";
+      document.getElementById("source").textContent = result.Fonte ? `Fonte: ${result.Fonte}` : "";
+      resultStatus.classList.add("hidden");
+      resultData.classList.remove("hidden");
+    }
+
+    async function loadHistory() {
+      const status = document.getElementById("history-status");
+      const list = document.getElementById("history-list");
+      status.textContent = "Carregando histórico...";
+      try {
+        const response = await fetch("/api/historico");
+        const rows = await response.json();
+        if (!response.ok || !Array.isArray(rows)) throw new Error("Falha ao carregar o histórico.");
+        list.replaceChildren();
+        status.textContent = rows.length ? `${rows.length} consulta(s) recente(s).` : "Nenhuma consulta encontrada.";
+        for (const item of rows) {
+          const card = document.createElement("li");
+          card.className = "rounded-xl border border-slate-200 p-3";
+          appendText(card, "h3", "font-semibold", `${item.codigo_ncm} · ${item.uf} · ${item.descricao_produto}`);
+          appendText(card, "p", "mt-1 text-sm text-slate-600", `Valor: ${money.format(Number(item.valor_unitario))}`);
+          const rates = fields.map(([key, label]) => {
+            const value = item[`aliquota_${key.toLowerCase()}`];
+            return `${label}: ${value === null ? "—" : `${percent.format(Number(value))}%`}`;
+          }).join(" · ");
+          appendText(card, "p", "mt-1 text-xs text-slate-500", rates);
+          appendText(card, "p", "mt-1 text-xs text-slate-400", item.criado_em ? new Date(item.criado_em).toLocaleString("pt-BR") : "");
+          list.append(card);
+        }
+      } catch {
+        list.replaceChildren();
+        status.textContent = "Não foi possível carregar o histórico. Tente atualizar.";
+      }
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      errorBox.textContent = "";
+      errorBox.classList.add("hidden");
+      resultData.classList.add("hidden");
+      const values = new FormData(form);
+      const price = Number(values.get("valor"));
+      const payload = {
+        token: String(values.get("token")).trim(),
+        cnpj: String(values.get("cnpj")).trim(),
+        codigo: String(values.get("codigo")).trim(),
+        uf: String(values.get("uf")),
+        descricao: String(values.get("descricao")).trim(),
+        unidadeMedida: String(values.get("unidadeMedida")).trim() || "UN",
+        valor: price,
+        gtin: String(values.get("gtin")).trim() || null,
+        ex: Number(values.get("ex") || 0)
+      };
+      const button = document.getElementById("submit-button");
+      button.disabled = true;
+      button.textContent = "Consultando...";
+      resultStatus.textContent = "Consultando a API do IBPT...";
+      resultStatus.classList.remove("hidden");
+      try {
+        const response = await fetch("/api/consultar-imposto", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const body = await response.json();
+        if (!response.ok) throw new Error(typeof body.detail === "string" ? body.detail : "Confira os dados e tente novamente.");
+        renderResult(body, price, `${payload.codigo} · ${payload.uf} · ${payload.descricao}`);
+        await loadHistory();
+      } catch (error) {
+        resultStatus.textContent = "A consulta não foi concluída.";
+        errorBox.textContent = error instanceof TypeError
+          ? "Não foi possível conectar ao serviço. Verifique a conexão."
+          : error.message || "Não foi possível concluir a consulta. Tente novamente.";
+        errorBox.classList.remove("hidden");
+      } finally {
+        button.disabled = false;
+        button.textContent = "Consultar estimativa";
+      }
+    });
+
+    document.getElementById("refresh-history").addEventListener("click", loadHistory);
+    loadHistory();
+  </script>
+</body>
+</html>
