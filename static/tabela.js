@@ -16,6 +16,22 @@ const firstPageButton = document.getElementById("first-page");
 const previousPageButton = document.getElementById("previous-page");
 const nextPageButton = document.getElementById("next-page");
 const lastPageButton = document.getElementById("last-page");
+const serviceDialog = document.getElementById("service-dialog");
+const serviceQuoteForm = document.getElementById("service-quote-form");
+const servicePriceInput = document.getElementById("service-sale-price");
+const serviceQuoteError = document.getElementById("service-quote-error");
+const serviceQuoteResult = document.getElementById("service-quote-result");
+const serviceBreakdown = document.getElementById("service-tax-breakdown");
+const currencyFormatter = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL",
+});
+const percentFormatter = new Intl.NumberFormat("pt-BR", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 4,
+});
+let selectedService = null;
+let serviceCheckbox = null;
 
 const COLUMN_LABELS = {
   codigo: "Código / NCM",
@@ -230,6 +246,114 @@ function updateButtons(pageCount) {
   lastPageButton.disabled = !hasRows || state.page >= pageCount;
 }
 
+function formatRate(value) {
+  if (value === undefined || value === null || value.trim() === "") return null;
+  const rate = Number(value.replace(",", "."));
+  return Number.isFinite(rate) ? rate : null;
+}
+
+function roundedCurrency(value) {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
+function addBreakdownRow(label, rateText, amountText) {
+  const row = document.createElement("div");
+  row.className = "flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-3";
+  const name = document.createElement("dt");
+  name.className = "text-sm font-medium text-slate-700";
+  name.textContent = label;
+  const values = document.createElement("dd");
+  values.className = "flex flex-wrap items-baseline gap-x-3 text-right";
+  const rate = document.createElement("span");
+  rate.className = "text-xs text-slate-500";
+  rate.textContent = rateText;
+  const amount = document.createElement("strong");
+  amount.className = "text-sm font-semibold text-slate-900";
+  amount.textContent = amountText;
+  values.append(rate, amount);
+  row.append(name, values);
+  serviceBreakdown.append(row);
+}
+
+function renderServiceQuote() {
+  serviceQuoteError.classList.add("hidden");
+  serviceQuoteError.textContent = "";
+  const price = Number(servicePriceInput.value);
+  if (!Number.isFinite(price) || price <= 0) {
+    serviceQuoteResult.classList.add("hidden");
+    serviceQuoteError.textContent = "Informe um valor de venda maior que zero.";
+    serviceQuoteError.classList.remove("hidden");
+    servicePriceInput.focus();
+    return;
+  }
+
+  const taxes = [
+    { key: "nacionalfederal", label: "Federal (nacional)" },
+    { key: "estadual", label: "Estadual" },
+    { key: "municipal", label: "Municipal" },
+  ];
+  let taxTotal = 0;
+  let availableTaxes = 0;
+  serviceBreakdown.replaceChildren();
+
+  for (const tax of taxes) {
+    const rate = formatRate(selectedService[tax.key]);
+    if (rate === null) {
+      addBreakdownRow(tax.label, "Percentual não informado", "Não calculado");
+      continue;
+    }
+    const amount = roundedCurrency(price * rate / 100);
+    taxTotal = roundedCurrency(taxTotal + amount);
+    availableTaxes += 1;
+    addBreakdownRow(
+      tax.label,
+      `${percentFormatter.format(rate)}%`,
+      currencyFormatter.format(amount),
+    );
+  }
+
+  document.getElementById("service-base-price").textContent = currencyFormatter.format(price);
+  document.getElementById("service-tax-total").textContent = availableTaxes
+    ? currencyFormatter.format(taxTotal)
+    : "Não disponível";
+  document.getElementById("service-grand-total").textContent = availableTaxes
+    ? currencyFormatter.format(roundedCurrency(price + taxTotal))
+    : currencyFormatter.format(price);
+  document.getElementById("service-estimate-note").textContent = availableTaxes < taxes.length
+    ? "Estimativa parcial: um ou mais percentuais não estavam disponíveis no arquivo. O total simulado soma apenas os valores calculados."
+    : "O cálculo aplica cada percentual ao valor de venda informado e soma os valores estimados, arredondados para centavos. A alíquota de importados não é usada para este serviço.";
+  serviceQuoteResult.classList.remove("hidden");
+}
+
+function openServiceQuote(row, checkbox) {
+  selectedService = row;
+  serviceCheckbox = checkbox;
+  document.getElementById("service-dialog-description").textContent = row.descricao ?? "Serviço";
+  document.getElementById("service-dialog-code").textContent =
+    `Código ${row.codigo ?? "—"} · Exceção ${row.ex || "0"} · Tipo serviço`;
+  servicePriceInput.value = "";
+  serviceQuoteError.classList.add("hidden");
+  serviceQuoteResult.classList.add("hidden");
+  serviceDialog.showModal();
+  servicePriceInput.focus();
+}
+
+serviceQuoteForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  renderServiceQuote();
+});
+document.getElementById("service-dialog-close").addEventListener("click", () => {
+  serviceDialog.close();
+});
+serviceDialog.addEventListener("click", (event) => {
+  if (event.target === serviceDialog) serviceDialog.close();
+});
+serviceDialog.addEventListener("close", () => {
+  if (serviceCheckbox?.isConnected) serviceCheckbox.checked = false;
+  selectedService = null;
+  serviceCheckbox = null;
+});
+
 function renderTable() {
   const query = normalizeText(searchInput.value.trim());
   const selectedSegment = businessFilter.value;
@@ -253,10 +377,30 @@ function renderTable() {
   const start = (state.page - 1) * state.pageSize;
   const pageRows = state.filteredRows.slice(start, start + state.pageSize);
   tableBody.replaceChildren();
+  const hasServiceType = state.columns.includes("tipo")
+    && state.rows.some((row) => row.tipo?.trim() === "2");
 
   for (const row of pageRows) {
     const tableRow = document.createElement("tr");
     tableRow.className = "odd:bg-white even:bg-slate-50 hover:bg-teal-50";
+    if (hasServiceType) {
+      const selectCell = document.createElement("td");
+      selectCell.className = "border-b border-slate-100 px-3 py-2 text-center";
+      if (row.tipo?.trim() === "2") {
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.className = "h-4 w-4 cursor-pointer rounded border-slate-300 text-teal-700 focus:ring-teal-600";
+        checkbox.setAttribute("aria-label", `Simular valor para o serviço ${row.codigo}: ${row.descricao}`);
+        checkbox.addEventListener("change", () => {
+          if (checkbox.checked) openServiceQuote(row, checkbox);
+        });
+        selectCell.append(checkbox);
+      } else {
+        selectCell.textContent = "—";
+        selectCell.classList.add("text-slate-300");
+      }
+      tableRow.append(selectCell);
+    }
     for (const column of state.columns) {
       const cell = document.createElement("td");
       cell.className = "border-b border-slate-100 px-3 py-2 align-top text-slate-700";
@@ -281,6 +425,15 @@ function renderTable() {
 
 function renderHeaders() {
   const row = document.createElement("tr");
+  const hasServiceType = state.columns.includes("tipo")
+    && state.rows.some((item) => item.tipo?.trim() === "2");
+  if (hasServiceType) {
+    const selectHeading = document.createElement("th");
+    selectHeading.scope = "col";
+    selectHeading.className = "whitespace-nowrap border-b border-slate-300 px-3 py-3 text-center font-semibold";
+    selectHeading.textContent = "Simular serviço";
+    row.append(selectHeading);
+  }
   for (const column of state.columns) {
     const heading = document.createElement("th");
     heading.scope = "col";
