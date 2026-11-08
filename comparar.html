@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Fiscalis | Comparar UFs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .field-input { min-height: 2.875rem; width: 100%; border: 1px solid #cbd5e1; border-radius: .625rem; background: #fff; padding: .625rem .75rem; color: #0f172a; }
+    .field-input:focus, button:focus-visible, a:focus-visible { outline: 3px solid rgb(13 148 136 / 35%); outline-offset: 2px; }
+    .field-label { display: block; margin-bottom: .4rem; font-size: .875rem; font-weight: 600; color: #334155; }
+    .bar-track { height: .75rem; overflow: hidden; border-radius: 9999px; background: #e2e8f0; }
+    .bar-fill { height: 100%; min-width: 2px; border-radius: inherit; background: #0f766e; }
+    @media (max-width: 640px) { .result-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-800">
+  <header class="bg-slate-900 text-white">
+    <div class="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-6 sm:px-6">
+      <a href="/" class="w-fit" aria-label="Fiscalis - voltar à calculadora">
+        <img src="/static/fiscalis-logo.png" alt="Fiscalis — Inteligência Tributária" class="h-auto w-56 rounded-lg">
+      </a>
+      <div>
+        <p class="text-sm font-semibold uppercase tracking-widest text-teal-300">Estimativa comparativa</p>
+        <h1 class="mt-1 text-3xl font-bold">Comparar UFs</h1>
+        <p class="mt-2 max-w-3xl text-slate-300">Compare estimativas tributárias de um produto em diferentes estados usando os dados retornados pela API.</p>
+      </div>
+      <nav class="flex flex-wrap gap-2" aria-label="Menu principal">
+        <a href="/" class="rounded-lg border border-slate-500 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">Calculadora</a>
+        <a href="/tabela" class="rounded-lg border border-slate-500 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">Tabela IBPT</a>
+        <a href="/comparar" aria-current="page" class="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white">Comparar UFs</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6">
+    <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:p-6" aria-labelledby="comparison-form-title">
+      <h2 id="comparison-form-title" class="text-xl font-bold">Dados da comparação</h2>
+      <p class="mt-1 text-sm leading-6 text-slate-600">Informe os dados do produto, incluindo o GTIN obrigatório pela API IBPT, e selecione de 2 a 27 UFs. O token é enviado somente na solicitação e não é salvo no navegador.</p>
+      <p class="mt-3 rounded-lg bg-amber-50 p-3 text-sm leading-6 text-amber-950" role="note">As comparações são exibidas somente nesta página, em memória, e não são retidas nem adicionadas ao histórico. Ao sair ou atualizar a página, os resultados deixam de estar disponíveis.</p>
+      <form id="comparison-form" class="mt-5 space-y-5">
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <label class="block" for="token">
+            <span class="field-label">Token IBPT</span>
+            <input id="token" name="token" type="password" autocomplete="off" required maxlength="500" class="field-input">
+          </label>
+          <label class="block" for="cnpj">
+            <span class="field-label">CNPJ</span>
+            <input id="cnpj" name="cnpj" type="text" inputmode="numeric" autocomplete="off" required minlength="14" maxlength="14" class="field-input">
+          </label>
+          <label class="block" for="codigo">
+            <span class="field-label">NCM</span>
+            <input id="codigo" name="codigo" type="text" inputmode="numeric" autocomplete="off" required class="field-input">
+          </label>
+          <label class="block" for="gtin">
+            <span class="field-label">GTIN</span>
+            <input id="gtin" name="gtin" type="text" autocomplete="off" required maxlength="20" class="field-input">
+          </label>
+          <label class="block" for="gtin">
+            <span class="field-label">GTIN</span>
+            <input id="gtin" name="gtin" type="text" autocomplete="off" required class="field-input">
+          </label>
+          <label class="block sm:col-span-2" for="descricao">
+            <span class="field-label">Descrição do produto</span>
+            <input id="descricao" name="descricao" type="text" required maxlength="255" class="field-input">
+          </label>
+          <label class="block" for="valor">
+            <span class="field-label">Valor base (R$)</span>
+            <input id="valor" name="valor" type="number" inputmode="decimal" min="0.01" step="0.01" required class="field-input">
+          </label>
+          <fieldset class="sm:col-span-2">
+            <legend class="field-label">Cenário</legend>
+            <div class="flex flex-wrap gap-4">
+              <label class="inline-flex min-h-11 items-center gap-2"><input type="radio" name="cenario" value="nacional" checked> Nacional</label>
+              <label class="inline-flex min-h-11 items-center gap-2"><input type="radio" name="cenario" value="importado"> Importado</label>
+            </div>
+          </fieldset>
+        </div>
+        <fieldset>
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <legend class="field-label mb-0">Unidades federativas (selecione de 2 a 27)</legend>
+            <div class="flex gap-2">
+              <button id="select-all-ufs" type="button" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold hover:bg-slate-50">Selecionar todas</button>
+              <button id="deselect-all-ufs" type="button" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold hover:bg-slate-50">Limpar seleção</button>
+            </div>
+          </div>
+          <div id="uf-options" class="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5 md:grid-cols-7" aria-describedby="uf-help"></div>
+          <p id="uf-help" class="mt-2 text-xs text-slate-500">Selecione no mínimo 2 e no máximo 27 estados e o Distrito Federal.</p>
+          <p id="uf-error" class="mt-2 hidden text-sm text-rose-700" role="alert"></p>
+        </fieldset>
+        <button id="compare-submit" type="submit" class="w-full rounded-lg bg-teal-700 px-4 py-3 font-semibold text-white hover:bg-teal-800 sm:w-auto">Comparar tributos</button>
+      </form>
+      <p id="comparison-status" class="mt-4 text-sm text-slate-600" role="status" aria-live="polite"></p>
+    </section>
+
+    <section id="comparison-results" class="hidden space-y-4" aria-labelledby="results-title" aria-live="polite">
+      <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:p-6">
+        <h2 id="results-title" class="text-xl font-bold">Resultado da comparação</h2>
+        <p id="comparison-summary" class="mt-2 text-sm text-slate-700"></p>
+        <p id="comparability-warning" class="mt-3 hidden rounded-lg bg-amber-50 p-3 text-sm text-amber-950" role="status"></p>
+        <p class="mt-3 text-sm text-slate-600">Os resultados exibidos permanecem apenas em memória nesta página e não são retidos.</p>
+        <div id="comparison-chart" class="mt-5 hidden"></div>
+      </div>
+      <div id="comparison-cards" class="grid result-grid gap-4 lg:grid-cols-2"></div>
+    </section>
+
+    <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:p-6" aria-labelledby="history-title">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 id="history-title" class="text-xl font-bold">Histórico</h2>
+          <p class="mt-1 text-sm text-slate-600">Até 50 registros históricos existentes. Os filtros são aplicados aos dados carregados nesta página; comparações desta página não são incluídas.</p>
+        </div>
+        <button id="refresh-history" type="button" class="min-h-11 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold hover:bg-slate-50">Atualizar histórico</button>
+      </div>
+      <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <label class="block text-sm font-medium" for="history-ncm">NCM<input id="history-ncm" type="search" class="field-input mt-1" autocomplete="off"></label>
+        <label class="block text-sm font-medium" for="history-uf">UF<select id="history-uf" class="field-input mt-1"><option value="">Todas</option></select></label>
+        <label class="block text-sm font-medium" for="history-date">Data<input id="history-date" type="date" class="field-input mt-1"></label>
+        <label class="block text-sm font-medium" for="history-scenario">Cenário<select id="history-scenario" class="field-input mt-1"><option value="">Todos</option><option value="nacional">Nacional</option><option value="importado">Importado</option></select></label>
+      </div>
+      <p class="mt-3 rounded-lg bg-slate-100 p-3 text-sm text-slate-700">A reprodução não está disponível para os registros históricos legados.</p>
+      <p id="history-status" class="mt-4 text-sm text-slate-600" role="status" aria-live="polite">Carregando histórico...</p>
+      <ul id="history-list" class="mt-3 space-y-3"></ul>
+    </section>
+  </main>
+  <script src="/static/comparar.js" defer></script>
+</body>
+</html>

@@ -33,6 +33,12 @@ const percentFormatter = new Intl.NumberFormat("pt-BR", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 4,
 });
+const integerFormatter = new Intl.NumberFormat("pt-BR", {
+  maximumFractionDigits: 0,
+});
+const decimalSeparator = percentFormatter
+  .formatToParts(1.1)
+  .find((part) => part.type === "decimal").value;
 let selectedService = null;
 let serviceCheckbox = null;
 
@@ -250,13 +256,71 @@ function updateButtons(pageCount) {
 }
 
 function formatRate(value) {
-  if (value === undefined || value === null || value.trim() === "") return null;
-  const rate = Number(value.replace(",", "."));
-  return Number.isFinite(rate) ? rate : null;
+  const parsed = parseDecimal(value, true);
+  if (!parsed) return null;
+
+  const displayScaled = roundHalfUp(
+    parsed.coefficient * 10000n,
+    10n ** BigInt(parsed.scale),
+  );
+  const fraction = (displayScaled % 10000n).toString().padStart(4, "0").replace(/0+$/, "");
+  const displayedFraction = fraction.padEnd(2, "0");
+  return {
+    ...parsed,
+    display: `${integerFormatter.format(displayScaled / 10000n)}${decimalSeparator}${displayedFraction}`,
+  };
 }
 
-function roundedCurrency(value) {
-  return Math.round((value + Number.EPSILON) * 100) / 100;
+function parseDecimal(value, allowComma = false) {
+  if (value === undefined || value === null) return null;
+  let text = String(value).trim();
+  if (!text) return null;
+  if (allowComma) text = text.replace(",", ".");
+  if (text.length > 100) return null;
+
+  const match = text.match(/^(\d+)(?:\.(\d*))?(?:[eE]([+-]?\d+))?$/);
+  if (!match) return null;
+  const exponent = match[3] ? Number(match[3]) : 0;
+  if (!Number.isInteger(exponent) || Math.abs(exponent) > 100) return null;
+  let digits = `${match[1]}${match[2] ?? ""}`;
+  if (digits.length > 100) return null;
+  let scale = (match[2]?.length ?? 0) - exponent;
+  let coefficient;
+  try {
+    coefficient = BigInt(digits);
+  } catch {
+    return null;
+  }
+  if (scale < 0) {
+    coefficient *= 10n ** BigInt(-scale);
+    scale = 0;
+  }
+  return { coefficient, scale };
+}
+
+function roundHalfUp(numerator, denominator) {
+  return (numerator + denominator / 2n) / denominator;
+}
+
+function amountInCents(value) {
+  const amount = parseDecimal(value);
+  if (!amount) return null;
+  return roundHalfUp(amount.coefficient * 100n, 10n ** BigInt(amount.scale));
+}
+
+function taxInCents(priceCents, rate) {
+  return roundHalfUp(
+    priceCents * rate.coefficient,
+    100n * 10n ** BigInt(rate.scale),
+  );
+}
+
+function formatCurrencyCents(cents) {
+  const whole = cents / 100n;
+  const fraction = (cents % 100n).toString().padStart(2, "0");
+  return currencyFormatter.formatToParts(whole)
+    .map((part) => part.type === "fraction" ? fraction : part.value)
+    .join("");
 }
 
 function addBreakdownRow(label, rateText, amountText) {
@@ -281,8 +345,8 @@ function addBreakdownRow(label, rateText, amountText) {
 function renderServiceQuote() {
   serviceQuoteError.classList.add("hidden");
   serviceQuoteError.textContent = "";
-  const price = Number(servicePriceInput.value);
-  if (!Number.isFinite(price) || price <= 0) {
+  const priceCents = amountInCents(servicePriceInput.value);
+  if (priceCents === null || priceCents <= 0n) {
     serviceQuoteResult.classList.add("hidden");
     serviceQuoteError.textContent = "Informe um valor de venda maior que zero.";
     serviceQuoteError.classList.remove("hidden");
@@ -302,7 +366,7 @@ function renderServiceQuote() {
     { key: "estadual", label: "Estadual" },
     { key: "municipal", label: "Municipal" },
   ];
-  let taxTotal = 0;
+  let taxTotalCents = 0n;
   let availableTaxes = 0;
   serviceBreakdown.replaceChildren();
 
@@ -312,23 +376,23 @@ function renderServiceQuote() {
       addBreakdownRow(tax.label, "Percentual não informado", "Não calculado");
       continue;
     }
-    const amount = roundedCurrency(price * rate / 100);
-    taxTotal = roundedCurrency(taxTotal + amount);
+    const amountCents = taxInCents(priceCents, rate);
+    taxTotalCents += amountCents;
     availableTaxes += 1;
     addBreakdownRow(
       tax.label,
-      `${percentFormatter.format(rate)}%`,
-      currencyFormatter.format(amount),
+      `${rate.display}%`,
+      formatCurrencyCents(amountCents),
     );
   }
 
-  document.getElementById("service-base-price").textContent = currencyFormatter.format(price);
+  document.getElementById("service-base-price").textContent = formatCurrencyCents(priceCents);
   document.getElementById("service-tax-total").textContent = availableTaxes
-    ? currencyFormatter.format(taxTotal)
+    ? formatCurrencyCents(taxTotalCents)
     : "Não disponível";
   document.getElementById("service-grand-total").textContent = availableTaxes
-    ? currencyFormatter.format(roundedCurrency(price + taxTotal))
-    : currencyFormatter.format(price);
+    ? formatCurrencyCents(priceCents + taxTotalCents)
+    : "Não disponível";
   document.getElementById("service-estimate-note").textContent = availableTaxes < taxes.length
     ? "Estimativa parcial: um ou mais percentuais não estavam disponíveis no arquivo. O total simulado soma apenas os valores calculados."
     : isService

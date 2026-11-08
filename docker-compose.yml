@@ -24,6 +24,8 @@ services:
       DB_NAME: ${MYSQL_DATABASE:-db_tributos_app}
       DB_USER: ${MYSQL_USER:-fiscalis}
       DB_PASSWORD: ${MYSQL_PASSWORD:-fiscalis_dev_only}
+      IBPT_TOKEN: ${IBPT_TOKEN:-}
+      IBPT_CNPJ: ${IBPT_CNPJ:-}
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:

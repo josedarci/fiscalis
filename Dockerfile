@@ -8,7 +8,8 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY main.py index.html tabela.html ./
+COPY main.py schema.sql index.html tabela.html comparar.html ./
+COPY services/__init__.py services/calculation.py ./services/
 COPY static/ ./static/
 
 EXPOSE 8000

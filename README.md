@@ -6,12 +6,12 @@
 
 <p align="center">
   MVP web para consultar uma estimativa de carga tributária de produtos pela API do IBPT,
-  com histórico persistido em MySQL.
+  com histórico de consultas individuais persistido em MySQL.
 </p>
 
 ## Sobre o projeto
 
-O Fiscalis recebe os dados de um produto, consulta a API de Produtos do IBPT (De Olho no Imposto), mostra as alíquotas retornadas e calcula os valores aproximados sobre o preço informado. As consultas são registradas em MySQL para consulta posterior.
+O Fiscalis recebe os dados de um produto, consulta a API de Produtos do IBPT (De Olho no Imposto), mostra as alíquotas retornadas e calcula os valores aproximados sobre o preço informado. Consultas individuais são registradas em MySQL para consulta posterior.
 
 > Os valores são estimativas informativas. Confirme a tributação aplicável com um profissional contábil e consulte a documentação e as condições de uso do IBPT.
 
@@ -58,7 +58,7 @@ Na raiz do projeto, execute o único comando de inicialização:
 docker compose up --build
 ```
 
-Na primeira execução, o Docker baixa as imagens, instala as dependências Python e cria os containers. O serviço web aguarda o MySQL ficar pronto e cria a tabela `consultas_tributos` automaticamente.
+Na primeira execução, o Docker baixa as imagens, instala as dependências Python e cria os containers. O Compose inicializa o banco; o serviço web aguarda o MySQL ficar pronto e executa as definições `CREATE TABLE IF NOT EXISTS` de `schema.sql`, sem alterar tabelas existentes.
 
 Quando o log indicar que o Uvicorn está em execução, abra:
 
@@ -75,9 +75,12 @@ MYSQL_DATABASE=db_tributos_app
 MYSQL_USER=fiscalis
 MYSQL_PASSWORD=troque-esta-senha
 MYSQL_ROOT_PASSWORD=troque-a-senha-root
+# Opcional: credenciais padrão para clientes que não as enviam no corpo
+IBPT_TOKEN=
+IBPT_CNPJ=
 ```
 
-As credenciais acima são apenas um exemplo para desenvolvimento. Troque-as antes de expor o serviço ou reutilizar o banco fora da máquina local. O arquivo `.env` é ignorado pelo Git.
+As credenciais de banco acima são apenas um exemplo para desenvolvimento. Troque-as antes de expor o serviço ou reutilizar o banco fora da máquina local. Se `IBPT_TOKEN` e `IBPT_CNPJ` forem definidos, serão usados quando um cliente não os enviar na requisição; os valores explícitos do formulário têm precedência. O arquivo `.env` é ignorado pelo Git.
 
 ## Como usar
 
@@ -116,7 +119,7 @@ Exemplo de corpo JSON:
 ```json
 {
   "token": "SEU_TOKEN_IBPT",
-  "cnpj": "12345678000199",
+  "cnpj": "11222333000181",
   "codigo": "01012100",
   "uf": "SP",
   "descricao": "Produto de exemplo",
@@ -127,7 +130,13 @@ Exemplo de corpo JSON:
 }
 ```
 
-O campo `codigo` também pode ser informado como `NCM`. A resposta inclui o identificador salvo e os percentuais de tributos retornados pelo IBPT. Erros de validação, indisponibilidade da API externa e falhas no banco são informados com status HTTP apropriado.
+O campo `codigo` também pode ser informado como `NCM` ou `ncm`. O código deve ter exatamente oito dígitos (zeros à esquerda são preservados), a UF deve ser uma das 27 siglas brasileiras e o CNPJ deve conter 14 dígitos com verificadores válidos. O valor precisa ser positivo e finito. Unidade de medida, GTIN e exceção são opcionais conforme seus limites de formato.
+
+Esta rota consulta produtos pelo endpoint de produtos do IBPT; consultas de serviços não são suportadas por ela. Serviços continuam disponíveis para simulação a partir da tabela CSV local. A resposta inclui o identificador salvo e os percentuais retornados pelo IBPT, incluindo alíquotas iguais a zero. Uma resposta sem percentuais utilizáveis não é salva. Entradas inválidas retornam `422`, timeout do IBPT retorna `504`, falhas da API retornam `502` e falhas de persistência retornam `503`.
+
+### `POST /api/comparar-tributos`
+
+Consulta as UFs solicitadas em paralelo limitado e retorna resultados em memória. Por enquanto, resultados de comparação não são persistidos, listados no histórico nem reproduzíveis: os termos públicos consultados não confirmam permissão/duração de armazenamento ou redistribuição; `comparison_id` é `null` e `history_status` é `BLOCKED_LICENSE`. Essa funcionalidade permanece bloqueada até confirmação dos termos específicos do IBPT.
 
 ### `GET /api/historico`
 
@@ -135,7 +144,7 @@ Retorna até as 50 consultas mais recentes, incluindo NCM, descrição, valor, a
 
 ## Dados persistidos
 
-O MySQL cria a tabela `consultas_tributos` na inicialização. Cada consulta salva:
+O arquivo `schema.sql` define a tabela `consultas_tributos`; na inicialização, o serviço web executa somente suas instruções `CREATE TABLE IF NOT EXISTS` no banco já selecionado. Tabelas e históricos existentes não são alterados. Cada consulta salva:
 
 - CNPJ, UF, código NCM, descrição e valor informado;
 - alíquotas Nacional, Estadual, Municipal e Importado;
