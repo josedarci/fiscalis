@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Fiscalis | Tabela IBPT</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-800">
+  <header class="bg-slate-900 text-white">
+    <div class="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-6 sm:px-6">
+      <a href="/" class="w-fit" aria-label="Fiscalis - voltar à calculadora">
+        <img src="/static/fiscalis-logo.png" alt="Fiscalis — Inteligência Tributária" class="h-auto w-56 rounded-lg">
+      </a>
+      <div>
+        <p class="text-sm font-semibold uppercase tracking-widest text-teal-300">Consulta local de dados</p>
+        <h1 class="mt-1 text-3xl font-bold">Tabela IBPT</h1>
+        <p class="mt-2 max-w-3xl text-slate-300">Carregue o CSV baixado do IBPT para pesquisar, ordenar e paginar os códigos e alíquotas no navegador.</p>
+      </div>
+      <nav class="flex flex-wrap gap-2" aria-label="Menu principal">
+        <a href="/" class="rounded-lg border border-slate-500 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">Calculadora</a>
+        <a href="/tabela" aria-current="page" class="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white">Tabela IBPT</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-7xl space-y-5 px-4 py-6 sm:px-6">
+    <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:p-6" aria-labelledby="load-title">
+      <h2 id="load-title" class="text-lg font-bold">1. Carregue o arquivo CSV</h2>
+      <p class="mt-1 text-sm leading-6 text-slate-600">Selecione o arquivo <code class="rounded bg-slate-100 px-1">TabelaIBPT...</code> que você baixou. O conteúdo é lido somente nesta página do seu navegador; não é enviado ao servidor nem adicionado ao GitHub.</p>
+      <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <label for="csv-file" class="sr-only">Arquivo CSV da tabela IBPT</label>
+        <input id="csv-file" type="file" accept=".csv,text/csv"
+          class="block w-full max-w-xl rounded-lg border border-slate-300 bg-white text-sm file:mr-4 file:border-0 file:bg-slate-100 file:px-4 file:py-3 file:font-semibold file:text-slate-800 hover:file:bg-slate-200">
+        <span id="file-status" class="text-sm text-slate-600" role="status" aria-live="polite">Nenhum arquivo carregado.</span>
+      </div>
+      <p id="file-error" class="mt-3 hidden rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800" role="alert"></p>
+    </section>
+
+    <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:p-6" aria-labelledby="table-title">
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <h2 id="table-title" class="text-lg font-bold">2. Pesquise e navegue pela tabela</h2>
+          <p class="mt-1 text-sm text-slate-600">Clique em um título de coluna para ordenar. A pesquisa considera todos os campos.</p>
+        </div>
+        <div class="grid gap-3 sm:grid-cols-[minmax(15rem,1fr)_auto] lg:w-2/3">
+          <label class="block text-sm font-medium" for="table-search">Pesquisar NCM, descrição ou qualquer campo
+            <input id="table-search" type="search" disabled placeholder="Ex.: 01012100 ou cavalos"
+              class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 disabled:bg-slate-100">
+          </label>
+          <label class="block text-sm font-medium" for="page-size">Linhas por página
+            <select id="page-size" disabled class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 disabled:bg-slate-100">
+              <option value="25">25</option>
+              <option value="50" selected>50</option>
+              <option value="100">100</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div class="mt-4 flex flex-col gap-3 border-y border-slate-200 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <p id="result-count" class="text-sm text-slate-600" aria-live="polite">Carregue um CSV para começar.</p>
+        <div class="flex items-center gap-2">
+          <button id="first-page" type="button" disabled class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-40" aria-label="Primeira página">«</button>
+          <button id="previous-page" type="button" disabled class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-40">Anterior</button>
+          <span id="page-indicator" class="min-w-24 text-center text-sm text-slate-600" aria-live="polite">Página 0 de 0</span>
+          <button id="next-page" type="button" disabled class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-40">Próxima</button>
+          <button id="last-page" type="button" disabled class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-40" aria-label="Última página">»</button>
+        </div>
+      </div>
+
+      <div class="mt-4 max-h-[65vh] overflow-auto rounded-lg border border-slate-200">
+        <table class="min-w-full border-separate border-spacing-0 text-left text-sm">
+          <caption class="sr-only">Tabela de produtos e alíquotas IBPT; use os botões nos cabeçalhos para ordenar as linhas.</caption>
+          <thead id="table-head" class="sticky top-0 z-10 bg-slate-100 text-xs uppercase tracking-wide text-slate-700"></thead>
+          <tbody id="table-body" class="divide-y divide-slate-100"></tbody>
+        </table>
+        <p id="empty-state" class="px-4 py-10 text-center text-sm text-slate-500">A tabela aparecerá aqui após carregar o arquivo.</p>
+      </div>
+    </section>
+    <p class="text-xs leading-5 text-slate-500">Confira a versão e o período de vigência do arquivo. Os dados e alíquotas são disponibilizados pelo IBPT; esta tela apenas apresenta o conteúdo do CSV selecionado.</p>
+  </main>
+  <script src="/static/tabela.js" defer></script>
+</body>
+</html>

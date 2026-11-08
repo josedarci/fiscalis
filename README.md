@@ -90,6 +90,16 @@ As credenciais acima são apenas um exemplo para desenvolvimento. Troque-as ante
 
 O formulário não guarda o token no navegador nem o envia ao banco de dados. O CNPJ é gravado na tabela de histórico. Não use credenciais reais em computadores compartilhados.
 
+### Consultar a tabela IBPT local
+
+1. No menu superior, clique em **Tabela IBPT** ou abra `http://localhost:8000/tabela`.
+2. Clique no seletor de arquivo e escolha o CSV `TabelaIBPT...csv` baixado do portal IBPT.
+3. Use a busca para filtrar por NCM, descrição, vigência, alíquota ou qualquer outro campo.
+4. Clique no título de uma coluna para ordenar; clique novamente para inverter a ordem.
+5. Use os controles de paginação para navegar pelos resultados e escolha exibir 25, 50 ou 100 linhas por página.
+
+O CSV é lido localmente pelo navegador: seu conteúdo não é enviado ao servidor nem incluído no repositório. Baixe a tabela atualizada pelo canal oficial do IBPT e confira a versão e vigência antes de usar os valores.
+
 ## API HTTP
 
 ### `POST /api/consultar-imposto`
@@ -158,8 +168,10 @@ docker compose down -v
 ├── main.py
 ├── requirements.txt
 ├── schema.sql
+├── tabela.html
 └── static/
-    └── fiscalis-logo.png
+    ├── fiscalis-logo.png
+    └── tabela.js
 ```
 
 Os diretórios `services/` e `tests/` também contêm a implementação modular anterior e seus testes automatizados.

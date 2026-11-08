@@ -99,6 +99,11 @@ def home() -> FileResponse:
     return FileResponse(os.path.join(BASE_DIR, "index.html"))
 
 
+@app.get("/tabela", include_in_schema=False)
+def tabela_ibpt() -> FileResponse:
+    return FileResponse(os.path.join(BASE_DIR, "tabela.html"))
+
+
 def _get_codigo(data: ConsultaRequest) -> str:
     codigo = (data.codigo or data.NCM or "").strip()
     if not codigo:
