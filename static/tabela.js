@@ -252,14 +252,41 @@ function renderHeaders() {
     heading.className = "whitespace-nowrap border-b border-slate-300 px-3 py-3 text-left font-semibold";
     const sortButton = document.createElement("button");
     sortButton.type = "button";
-    sortButton.className = "inline-flex items-center gap-1 text-left hover:text-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-600";
+    sortButton.className = "inline-flex items-center gap-1.5 rounded-sm text-left hover:text-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-600";
     const label = COLUMN_LABELS[column] ?? column;
-    sortButton.textContent = `${label}${state.sortColumn === column ? (state.sortDirection === "asc" ? " ↑" : " ↓") : " ↕"}`;
+    const isSortedColumn = state.sortColumn === column;
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    icon.setAttribute("viewBox", "0 0 16 16");
+    icon.setAttribute("width", "14");
+    icon.setAttribute("height", "14");
+    icon.setAttribute("fill", "none");
+    icon.setAttribute("stroke", "currentColor");
+    icon.setAttribute("stroke-width", "1.5");
+    icon.setAttribute("stroke-linecap", "round");
+    icon.setAttribute("stroke-linejoin", "round");
+    icon.setAttribute("aria-hidden", "true");
+    if (!isSortedColumn) {
+      icon.classList.add("text-slate-400");
+      path.setAttribute("d", "M5 6l3-3 3 3M5 10l3 3 3-3");
+    } else if (state.sortDirection === "asc") {
+      icon.classList.add("text-teal-700");
+      path.setAttribute("d", "M5 10l3-3 3 3");
+    } else {
+      icon.classList.add("text-teal-700");
+      path.setAttribute("d", "M5 6l3 3 3-3");
+    }
+    icon.append(path);
+    sortButton.append(document.createTextNode(label), icon);
+    sortButton.setAttribute(
+      "aria-label",
+      isSortedColumn
+        ? `Ordenar por ${label} em ordem ${state.sortDirection === "asc" ? "decrescente" : "crescente"}`
+        : `Ordenar por ${label}`,
+    );
     heading.setAttribute(
       "aria-sort",
-      state.sortColumn === column
-        ? (state.sortDirection === "asc" ? "ascending" : "descending")
-        : "none",
+      isSortedColumn ? (state.sortDirection === "asc" ? "ascending" : "descending") : "none",
     );
     sortButton.addEventListener("click", () => {
       if (state.sortColumn === column) {
